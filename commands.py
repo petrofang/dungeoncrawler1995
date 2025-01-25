@@ -32,6 +32,27 @@ class CommandList():
     def __no_dunders(arg:str, **kwargs): 
         ''' A filter to show only public commands on the help list.'''
         return not arg.startswith('_')
+    
+    def inventory(player:Player, **kwargs):
+        ''' 
+        inventory   - Check inventory and equipment. 
+        inv         - Alias for inventory.
+        '''
+        # list equipped items:
+        # CommandList.equip(subject)
+
+        # list inventory items:
+        s = '' if player.name[-1] == 's' else 's'
+        title = (f'  {str(player.name).capitalize()}\'{s} Inventory  ')
+        title = f'{title:^30}'
+        player.io.print('─'*len(title))
+        player.io.print(title)
+        player.io.print('─'*len(title))
+        if player.inventory: 
+            for each_item in player.inventory:
+                player.io.print(each_item)
+        else: player.io.print('None')
+        player.io.print()
 
     def help(player:Player, arg:str = None, target=None, **kwargs):
         ''' 

@@ -1,5 +1,5 @@
 """
-DungeonCrawler1985 ORM Package
+DungeonCrawler1995 ORM Package
 -----------------------------
 Database models and SQLAlchemy setup for the dungeon crawler game.
 """

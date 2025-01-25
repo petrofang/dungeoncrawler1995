@@ -1,5 +1,5 @@
 """
-DungeonCrawler1985 Game Engine Package
+DungeonCrawler1995 Game Engine Package
 """
 
 from .exceptions import Quit

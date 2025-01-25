@@ -17,6 +17,6 @@ Reference: ASCII Box Drawing Characters
 ┈   ┊
 ╭   ╮
 ╰   ╯
-╱	╲	╳	
+╱   ╲   ╳	
 ►   ◄   ▲   ▼
 '''
