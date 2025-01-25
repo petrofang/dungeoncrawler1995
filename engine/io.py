@@ -13,6 +13,8 @@ class IOHandler(ABC):
     def start_session(self) -> None:
         """Start a game session - authenticate and begin command loop."""
         if player := self.authenticate():
+            # attach the io handler to the player object:
+            player.io = self
             self.listen(player)
 
     def authenticate(self) -> Player|None:
@@ -33,11 +35,11 @@ class IOHandler(ABC):
         """Main command loop - get input and pass to parser."""
         while True:
             command = self.input()
-            if not self.parser.parse(self, player, command):
+            if not self.parser.parse(player,command):
                 break
 
     @abstractmethod
-    def output(self, message: str) -> None:
+    def print(self, message: str) -> None:
         """Display output to the user."""
         pass
 
@@ -54,7 +56,7 @@ class IOHandler(ABC):
         if player := SQL.query(Player).filter_by(username=username).first():
             if player.check_password(password):
                 return player
-        self.output("Invalid username or password")
+        self.print("Invalid username or password")
         return None
 
     def _create_player(self) -> Player:
@@ -63,7 +65,7 @@ class IOHandler(ABC):
             username = self.input("Choose username: ")
             if not SQL.query(Player).filter_by(username=username).first():
                 break
-            self.output("Username taken")
+            self.print("Username taken")
         
         name = username.capitalize()
         password = self.input("Choose password: ")
@@ -83,8 +85,8 @@ class IOHandler(ABC):
 class ConsoleIO(IOHandler):
     """Implementation of IOHandler for console-based interaction."""
     
-    def output(self, message: str) -> None:
-        print(message)
+    def print(self, message: str = '', **kwargs) -> None:
+        print(message, **kwargs)
 
     def input(self, prompt: str|None = None) -> str:
         return input(prompt or " > ").strip().lower()
@@ -92,8 +94,11 @@ class ConsoleIO(IOHandler):
 class RemoteIO(IOHandler):
     """Stub implementation of IOHandler for remote connections."""
     
-    def output(self, message: str) -> None:
+    def print(self, message: str) -> None:
         raise NotImplementedError
 
     def input(self, prompt: str|None = None) -> str:
         raise NotImplementedError
+
+if __name__ == "__main__":
+    print("This module is not meant to be run directly. use main.py instead.")
