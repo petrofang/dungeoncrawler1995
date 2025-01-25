@@ -68,8 +68,8 @@ class Room(GameObject):
     id: Mapped[fk_id]
     exits: Mapped[List["Exit"]] = relationship(back_populates="from_room", foreign_keys='Exit.from_room_id')
     entries: Mapped[List["Exit"]] = relationship(back_populates="to_room", foreign_keys='Exit.to_room_id')
-    
-    def look(self, looker) -> str:
+  
+    def view(self, looker) -> str:
         items = [obj for obj in self.inventory if isinstance(obj, Item)]
         creatures = [mob for mob in self.inventory if isinstance(mob, Creature) and mob != looker]
         items_text = "Items: " + ", ".join(i.name for i in items) if items else ""
@@ -86,6 +86,12 @@ class Creature(GameObject):
     Int: Mapped[null_1] # Intelligence
     hp: Mapped[null_1] # Hit points
     hp_max: Mapped[null_1] # Maximum hit points
+
+    @property
+    def room(self) -> Room:
+        if self.owner.object_type == 'room':
+            return self.owner
+        
 
 
 class Player(Creature):
@@ -131,3 +137,7 @@ class Exit(Base):
         return (f'<{self.__class__.__name__}',
                 f'(id:{self.id})[{self.from_room_id}]->',
                 f'{self.direction}->[{self.to_room_id}]>')
+    
+
+if __name__=="__main__":
+    print("this module is not meant to be run directly")
