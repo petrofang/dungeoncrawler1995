@@ -3,8 +3,11 @@ from sqlalchemy import create_engine, ForeignKey, JSON
 from sqlalchemy.orm import DeclarativeBase, sessionmaker, mapped_column, relationship, Mapped
 from typing import List
 from typing_extensions import Annotated
+from passlib.hash import pbkdf2_sha256
 
-from shadow import SERVER, USER, PASSWORD, DATABASE
+from orm.shadow import SERVER, USER, PASSWORD, DATABASE
+
+STARTING_ROOM = 0
 
 # Database connection setup
 connection = f"mssql+pymssql://{USER}:{PASSWORD}@{SERVER}/{DATABASE}"
@@ -20,6 +23,7 @@ fk_to_room = Annotated[int, mapped_column(ForeignKey('rooms.id', name='fk_to_roo
 fk_room = Annotated[int, mapped_column(ForeignKey('rooms.id', name='fk_room'))]
 json = Annotated[str, mapped_column(JSON)]
 null_1 = Annotated[int, mapped_column(nullable=False, default=1)]
+creature_id = Annotated[int, mapped_column(ForeignKey('creatures.id'), primary_key=True, autoincrement=True)]
 
 # Base class
 class Base(DeclarativeBase):
@@ -65,9 +69,9 @@ class Room(GameObject):
     exits: Mapped[List["Exit"]] = relationship(back_populates="from_room", foreign_keys='Exit.from_room_id')
     entries: Mapped[List["Exit"]] = relationship(back_populates="to_room", foreign_keys='Exit.to_room_id')
     
-    def look(self) -> str:
+    def look(self, looker) -> str:
         items = [obj for obj in self.inventory if isinstance(obj, Item)]
-        creatures = [obj for obj in self.inventory if isinstance(obj, Creature)]
+        creatures = [mob for mob in self.inventory if isinstance(mob, Creature) and mob != looker]
         items_text = "Items: " + ", ".join(i.name for i in items) if items else ""
         creatures_text = "Creatures: " + ", ".join(c.name for c in creatures) if creatures else ""
         return f'[{self.name}]\n    {self.description} {items_text}. {creatures_text}. \nExits: {", ".join(e.direction for e in self.exits)}'
@@ -83,7 +87,21 @@ class Creature(GameObject):
     hp: Mapped[null_1] # Hit points
     hp_max: Mapped[null_1] # Maximum hit points
 
+
+class Player(Creature):
+    __tablename__ = 'players'
+    __mapper_args__ = {'polymorphic_identity': 'player'}
     
+    id: Mapped[creature_id]
+    username: Mapped[str] = mapped_column(unique=True)
+    password_hash: Mapped[str]
+    
+    def set_password(self, password: str) -> None:
+        self.password_hash = pbkdf2_sha256.hash(password)
+        
+    def check_password(self, password: str) -> bool:
+        return pbkdf2_sha256.verify(password, self.password_hash)
+        
 class Item(GameObject):
     __tablename__ = 'items'
     __mapper_args__ = {'polymorphic_identity': 'item'}
