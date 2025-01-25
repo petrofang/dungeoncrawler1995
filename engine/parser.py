@@ -30,7 +30,7 @@ class Parser:
         verb, *args = command.split()
         arg = " ".join(args) if args else None
         target = arg # target acquisition is handled by each command handler
-        command_action = getattr(CommandList, command, None)
+        command_action = getattr(CommandList, verb, None)
         if command_action: 
             command_action(player=player, arg=arg, target=target)                
         else:                 
