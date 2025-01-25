@@ -14,11 +14,12 @@ SQL = Session()
 
 # Type annotations
 pk_id = Annotated[int, mapped_column(primary_key=True, autoincrement=True)]
-fk_id = Annotated[int, mapped_column(ForeignKey('game_objects.id'))]
+fk_id = Annotated[int, mapped_column(ForeignKey('game_objects.id'), primary_key=True, autoincrement=True)]
 fk_from_room = Annotated[int, mapped_column(ForeignKey('rooms.id', name='fk_from_room'))]
 fk_to_room = Annotated[int, mapped_column(ForeignKey('rooms.id', name='fk_to_room'))]
 fk_room = Annotated[int, mapped_column(ForeignKey('rooms.id', name='fk_room'))]
 json = Annotated[str, mapped_column(JSON)]
+null_1 = Annotated[int, mapped_column(nullable=False, default=1)]
 
 # Base class
 class Base(DeclarativeBase):
@@ -27,16 +28,13 @@ class Base(DeclarativeBase):
 
 class GameObject(Base):
     __tablename__ = 'game_objects'
-    __mapper_args__ = {
-        'polymorphic_identity': 'game_object',
-        'polymorphic_on': 'object_type'
-    }
-
+    __mapper_args__ = {'polymorphic_identity': 'game_object',
+                       'polymorphic_on': 'object_type'}
     id: Mapped[pk_id]
     name: Mapped[str]
     description: Mapped[str]
-    article = Mapped[bool] # True if the name should be preceded by 'a' or 'an'
-    owner_id: Mapped[int] = mapped_column(ForeignKey('game_objects.id', name='fk_owner'))
+    article: Mapped[bool] # True if the name should be preceded with an article such as 'a' or 'an'
+    owner_id: Mapped[int | None] = mapped_column(ForeignKey('game_objects.id'), nullable=True)
     object_type: Mapped[str]
 
     owner: Mapped["GameObject"] = relationship('GameObject', 
@@ -47,9 +45,14 @@ class GameObject(Base):
                                                          back_populates='owner', 
                                                          foreign_keys='GameObject.owner_id')    
 
-    def __init__(self, name: str, description: str):
+    @property
+    def a(self) -> str:
+        return 'an' if self.name[0].lower() in 'aeioh' else 'a'
+
+    def __init__(self, name: str, description: str, *args, **kwargs):
         self.name = name
         self.description = description
+        super().__init__(*args, **kwargs)
 
     def __repr__(self):
         return f'<{self.__class__.__name__}(id:{self.id})[{self.name}]>'
@@ -58,13 +61,9 @@ class Room(GameObject):
     __tablename__ = 'rooms'
     __mapper_args__ = {'polymorphic_identity': 'room'}
 
-    id: Mapped[fk_id] 
-
+    id: Mapped[fk_id]
     exits: Mapped[List["Exit"]] = relationship(back_populates="from_room", foreign_keys='Exit.from_room_id')
     entries: Mapped[List["Exit"]] = relationship(back_populates="to_room", foreign_keys='Exit.to_room_id')
-
-    def __repr__(self):
-        return f'<{self.__class__.__name__}(id:{self.id})[{self.name}]>'
     
     def look(self) -> str:
         items = [obj for obj in self.inventory if isinstance(obj, Item)]
@@ -75,26 +74,23 @@ class Room(GameObject):
 
 class Creature(GameObject):
     __tablename__ = 'creatures'
-    id: Mapped[fk_id] 
-    Str: Mapped[int] # Strength
-    Dex: Mapped[int] # Dexterity
-    Int: Mapped[int] # Intelligence
-    hp: Mapped[int] # Hit points
-    hp_max: Mapped[int] # Maximum hit points
-
     __mapper_args__ = {'polymorphic_identity': 'creature'}
 
-    def __repr__(self):
-        return f'<{self.__class__.__name__}(id:{self.id})[{self.name}]>'
+    id: Mapped[fk_id]
+    Str: Mapped[null_1] # Strength
+    Dex: Mapped[null_1] # Dexterity
+    Int: Mapped[null_1] # Intelligence
+    hp: Mapped[null_1] # Hit points
+    hp_max: Mapped[null_1] # Maximum hit points
+
     
 class Item(GameObject):
     __tablename__ = 'items'
-    id: Mapped[fk_id] 
-    stats: Mapped[json] # JSON string with item stats
     __mapper_args__ = {'polymorphic_identity': 'item'}
 
-    def __repr__(self):
-        return f'<{self.__class__.__name__}(id:{self.id})[{self.name}]>'
+    id: Mapped[fk_id]
+    stats: Mapped[json] # JSON string with item stats
+
 
 class Exit(Base):
     __tablename__ = 'exits'
@@ -114,4 +110,6 @@ class Exit(Base):
         self.direction = direction
 
     def __repr__(self):
-        return f'<{self.__class__.__name__}(id:{self.id})[{self.from_room_id}]->{self.direction}->[{self.to_room_id}]>'
+        return (f'<{self.__class__.__name__}',
+                f'(id:{self.id})[{self.from_room_id}]->',
+                f'{self.direction}->[{self.to_room_id}]>')
