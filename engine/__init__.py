@@ -7,7 +7,8 @@ Game engine for the dungeon crawler game.
 __version__ = '0.1.0'
 __author__ = 'Giles Cooper'
 
-from .io import IOHandler, ConsoleIO, Parser
+from .io import IOHandler, ConsoleIO
+from .parser import Parser
 
 # Explicitly declare public API
 __all__ = [
