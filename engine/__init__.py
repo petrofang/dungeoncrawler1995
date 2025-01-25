@@ -4,8 +4,7 @@ DungeonCrawler1985 Game Engine Package
 Game engine for the dungeon crawler game.
 """
 
-__version__ = '0.1.0'
-__author__ = 'Giles Cooper'
+from ini import __author__, __version__
 
 from .io import IOHandler, ConsoleIO
 from .parser import Parser

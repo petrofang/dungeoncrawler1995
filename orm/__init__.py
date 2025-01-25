@@ -4,8 +4,7 @@ DungeonCrawler1985 ORM Package
 Database models and SQLAlchemy setup for the dungeon crawler game.
 """
 
-__version__ = '0.1.0'
-__author__ = 'Giles Cooper'
+from ini import __author__, __version__
 
 from .models import SQL, Base, GameObject, Room, Exit, Item, Creature, Player
 
