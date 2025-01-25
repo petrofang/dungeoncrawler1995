@@ -2,14 +2,7 @@ from abc import ABC, abstractmethod
 from orm import Player, SQL
 from ini import STARTING_ROOM
 from .parser import Parser
-
-class GameException(Exception):
-    """Base class for game exceptions"""
-    pass
-
-class Quit(GameException):
-    """Raised when a player quits the game"""
-    pass
+from .exceptions import Quit
 
 class IOHandler(ABC):
     """Base class for handling input/output operations in the game."""
