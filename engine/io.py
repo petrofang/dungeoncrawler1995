@@ -1,14 +1,22 @@
 from abc import ABC, abstractmethod
 from orm import Player, SQL
 from ini import STARTING_ROOM
-
-
+from .parser import Parser
 
 class IOHandler(ABC):
-    def __init__(self, parser: 'Parser'):
+    """Base class for handling input/output operations in the game."""
+    
+    def __init__(self, parser: Parser):
+        """Initialize with a command parser."""
         self.parser = parser
 
+    def start_session(self) -> None:
+        """Start a game session - authenticate and begin command loop."""
+        if player := self.authenticate():
+            self.listen(player)
+
     def authenticate(self) -> Player|None:
+        """Authenticate player and return Player object or None."""
         while True:
             choice = self.input("[L]ogin or [C]reate character? ")
             
@@ -21,7 +29,25 @@ class IOHandler(ABC):
                 case "q":
                     return None
     
+    def listen(self, player: Player) -> None:
+        """Main command loop - get input and pass to parser."""
+        while True:
+            command = self.input()
+            if not self.parser.parse(self, player, command):
+                break
+
+    @abstractmethod
+    def output(self, message: str) -> None:
+        """Display output to the user."""
+        pass
+
+    @abstractmethod
+    def input(self, prompt: str|None = None) -> str:
+        """Get input from the user."""
+        pass
+
     def _login(self) -> Player|None:
+        """Handle login flow."""
         username = self.input("Username: ")
         password = self.input("Password: ")
         
@@ -32,6 +58,7 @@ class IOHandler(ABC):
         return None
 
     def _create_player(self) -> Player:
+        """Handle new player creation flow."""
         while True:
             username = self.input("Choose username: ")
             if not SQL.query(Player).filter_by(username=username).first():
@@ -48,58 +75,25 @@ class IOHandler(ABC):
             article=False,
             owner_id=STARTING_ROOM,
         )
-
         player.set_password(password)
         SQL.add(player)
         SQL.commit()
         return player
-              
-    def listen(self, player) -> None:
-        """Start listening for commands and pass them to parser"""
-
-        while True:
-            command = self.input()
-            if not self.parser.parse(self, player, command):
-                break
-  
-    @abstractmethod
-    def output(self, message: str) -> None:
-        pass
-
-    @abstractmethod
-    def input(self, prompt: str|None = None) -> str:
-        pass
 
 class ConsoleIO(IOHandler):
+    """Implementation of IOHandler for console-based interaction."""
+    
     def output(self, message: str) -> None:
         print(message)
 
     def input(self, prompt: str|None = None) -> str:
         return input(prompt or " > ").strip().lower()
+
+class RemoteIO(IOHandler):
+    """Stub implementation of IOHandler for remote connections."""
     
+    def output(self, message: str) -> None:
+        raise NotImplementedError
 
-# TODO: Implement other IOHandlers as needed (for example, a telnet handler)
-
-
-class Parser:
-    def parse(self, io: IOHandler, player: Player, command: str) -> bool:
-        """Parse and handle a command. Return False to quit."""
-        if not command:
-            return True
-            
-        verb, *args = command.split()
-        
-        match verb:
-            case "quit" | "q":
-                io.output("Goodbye!")
-                return False
-            case "look" | "l":
-                io.output(player.owner.look(player))
-            case _:
-                io.output("I don't understand that.")
-        return True
-
-# Usage would be like:
-# parser = Parser()
-# io = ConsoleIO(parser)
-# io.listen()
+    def input(self, prompt: str|None = None) -> str:
+        raise NotImplementedError
