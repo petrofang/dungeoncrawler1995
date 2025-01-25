@@ -1,5 +1,6 @@
-from orm import Player, Creature, Item
+from orm import Player, Creature, Item, Room, Exit
 from engine import Quit
+
 
 class CommandList():
     ''' 
@@ -81,7 +82,6 @@ class CommandList():
                 player.print(f"You see no '{arg}'.")
         '''
         return True
-    l=look
 
     def quit(player: Player, **kwargs):
         """
@@ -89,7 +89,6 @@ class CommandList():
         """
         raise Quit()
         
-    q = quit 
 
 def find_target(player:Player, arg:str, type=None, in_room=False, in_inventory=False,
                 in_equipment=False, in_exits=False, in_containers=False, **kwargs):
@@ -171,3 +170,11 @@ def find_target(player:Player, arg:str, type=None, in_room=False, in_inventory=F
                     target = exit
         return target
     return target
+
+
+class AliasList():
+    ''' 
+    This is the master list of all player command aliases.
+    '''
+    q = CommandList.quit
+    l = CommandList.look
