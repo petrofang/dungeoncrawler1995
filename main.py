@@ -22,6 +22,4 @@ def splash():
 if __name__ == "__main__":
     connection = ConsoleIO(Parser())
     connection.output(splash())
-    player = connection.authenticate()
-    if player:
-        connection.listen(player)
+    connection.start_session()
