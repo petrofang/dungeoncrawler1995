@@ -31,7 +31,7 @@ class CommandList():
         ''' A filter to show only public commands on the help list.'''
         return not arg.startswith('_')
 
-    def help(player:Player = None, arg:str = None, target=None, **kwargs):
+    def help(player:Player, arg:str = None, target=None, **kwargs):
         ''' 
         help           - get a list of commands.
         help <command> - show help for a command.
@@ -49,7 +49,7 @@ class CommandList():
             player.io.print(help_command.__doc__)       
         else: player.io.print(f'Unknown command "{arg}".')
 
-    def look(player:Player = None, arg:str = None, **kwargs):
+    def look(player:Player, arg:str = None, **kwargs):
         """
         look - look at your surroundings
         look <target> - look at target
