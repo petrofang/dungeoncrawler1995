@@ -3,6 +3,14 @@ from orm import Player, SQL
 from ini import STARTING_ROOM
 from .parser import Parser
 
+class GameException(Exception):
+    """Base class for game exceptions"""
+    pass
+
+class Quit(GameException):
+    """Raised when a player quits the game"""
+    pass
+
 class IOHandler(ABC):
     """Base class for handling input/output operations in the game."""
     
@@ -33,10 +41,14 @@ class IOHandler(ABC):
     
     def listen(self, player: Player) -> None:
         """Main command loop - get input and pass to parser."""
-        while True:
-            command = self.input()
-            if not self.parser.parse(player,command):
-                break
+        try:
+            while True:
+                command = self.input()
+                self.parser.parse(player, command)
+        except Quit:
+            self.print("Goodbye!")
+            # Here we could do cleanup if needed
+            return
 
     @abstractmethod
     def print(self, message: str) -> None:

@@ -1,4 +1,5 @@
 from orm import Player, Creature, Item
+from engine import Quit
 
 class CommandList():
     ''' 
@@ -79,8 +80,16 @@ class CommandList():
             else:
                 player.print(f"You see no '{arg}'.")
         '''
+        return True
     l=look
 
+    def quit(player: Player, **kwargs):
+        """
+        quit    - disconnect from the game
+        """
+        raise Quit()
+        
+    q = quit 
 
 def find_target(player:Player, arg:str, type=None, in_room=False, in_inventory=False,
                 in_equipment=False, in_exits=False, in_containers=False, **kwargs):
