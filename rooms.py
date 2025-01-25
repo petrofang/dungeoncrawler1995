@@ -1,8 +1,11 @@
-from sqlalchemy import Integer, String, ForeignKey
-from sqlalchemy.orm import relationship, mapped_column, Mapped
+from sqlalchemy.orm import relationship, Mapped
 from typing import List
 
-from base import Base, pk_id, fk_from_room, fk_to_room
+from base import Base 
+from base import (pk_id, 
+                  fk_from_room, 
+                  fk_to_room,
+                  )
 
 class Room(Base):
     __tablename__ = 'rooms'
