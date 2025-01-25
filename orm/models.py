@@ -1,5 +1,5 @@
 import pymssql
-from sqlalchemy import create_engine, ForeignKey
+from sqlalchemy import create_engine, ForeignKey, JSON 
 from sqlalchemy.orm import DeclarativeBase, sessionmaker, mapped_column, relationship, Mapped
 from typing import List
 from typing_extensions import Annotated
@@ -12,27 +12,89 @@ engine = create_engine(connection)
 Session = sessionmaker(bind=engine)
 SQL = Session()
 
+# Type annotations
+pk_id = Annotated[int, mapped_column(primary_key=True, autoincrement=True)]
+fk_id = Annotated[int, mapped_column(ForeignKey('game_objects.id'))]
+fk_from_room = Annotated[int, mapped_column(ForeignKey('rooms.id', name='fk_from_room'))]
+fk_to_room = Annotated[int, mapped_column(ForeignKey('rooms.id', name='fk_to_room'))]
+fk_room = Annotated[int, mapped_column(ForeignKey('rooms.id', name='fk_room'))]
+json = Annotated[str, mapped_column(JSON)]
+
 # Base class
 class Base(DeclarativeBase):
     pass
-
-# Type annotations
-pk_id = Annotated[int, mapped_column(primary_key=True, autoincrement=True)]
-fk_from_room = Annotated[int, mapped_column(ForeignKey('rooms.id', name='fk_from_room'))]
-fk_to_room = Annotated[int, mapped_column(ForeignKey('rooms.id', name='fk_to_room'))]
-
 # Models
-class Room(Base):
-    __tablename__ = 'rooms'
+
+class GameObject(Base):
+    __tablename__ = 'game_objects'
+    __mapper_args__ = {
+        'polymorphic_identity': 'game_object',
+        'polymorphic_on': 'object_type'
+    }
+
     id: Mapped[pk_id]
-    title: Mapped[str]
+    name: Mapped[str]
     description: Mapped[str]
+    article = Mapped[bool] # True if the name should be preceded by 'a' or 'an'
+    owner_id: Mapped[int] = mapped_column(ForeignKey('game_objects.id', name='fk_owner'))
+    object_type: Mapped[str]
+
+    owner: Mapped["GameObject"] = relationship('GameObject', 
+                                            foreign_keys='GameObject.owner_id',
+                                            remote_side='GameObject.id',
+                                            back_populates='inventory')
+    inventory: Mapped[List["GameObject"]] = relationship('GameObject',
+                                                         back_populates='owner', 
+                                                         foreign_keys='GameObject.owner_id')    
+
+    def __init__(self, name: str, description: str):
+        self.name = name
+        self.description = description
+
+    def __repr__(self):
+        return f'<{self.__class__.__name__}(id:{self.id})[{self.name}]>'
+
+class Room(GameObject):
+    __tablename__ = 'rooms'
+    __mapper_args__ = {'polymorphic_identity': 'room'}
+
+    id: Mapped[fk_id] 
 
     exits: Mapped[List["Exit"]] = relationship(back_populates="from_room", foreign_keys='Exit.from_room_id')
     entries: Mapped[List["Exit"]] = relationship(back_populates="to_room", foreign_keys='Exit.to_room_id')
 
     def __repr__(self):
-        return f'<{self.__class__.__name__}(id:{self.id})[{self.title}]>'
+        return f'<{self.__class__.__name__}(id:{self.id})[{self.name}]>'
+    
+    def look(self) -> str:
+        items = [obj for obj in self.inventory if isinstance(obj, Item)]
+        creatures = [obj for obj in self.inventory if isinstance(obj, Creature)]
+        items_text = "Items: " + ", ".join(i.name for i in items) if items else ""
+        creatures_text = "Creatures: " + ", ".join(c.name for c in creatures) if creatures else ""
+        return f'[{self.name}]\n    {self.description} {items_text}. {creatures_text}. \nExits: {", ".join(e.direction for e in self.exits)}'
+
+class Creature(GameObject):
+    __tablename__ = 'creatures'
+    id: Mapped[fk_id] 
+    Str: Mapped[int] # Strength
+    Dex: Mapped[int] # Dexterity
+    Int: Mapped[int] # Intelligence
+    hp: Mapped[int] # Hit points
+    hp_max: Mapped[int] # Maximum hit points
+
+    __mapper_args__ = {'polymorphic_identity': 'creature'}
+
+    def __repr__(self):
+        return f'<{self.__class__.__name__}(id:{self.id})[{self.name}]>'
+    
+class Item(GameObject):
+    __tablename__ = 'items'
+    id: Mapped[fk_id] 
+    stats: Mapped[json] # JSON string with item stats
+    __mapper_args__ = {'polymorphic_identity': 'item'}
+
+    def __repr__(self):
+        return f'<{self.__class__.__name__}(id:{self.id})[{self.name}]>'
 
 class Exit(Base):
     __tablename__ = 'exits'
@@ -41,12 +103,15 @@ class Exit(Base):
     from_room_id: Mapped[fk_from_room]
     to_room_id: Mapped[fk_to_room]
 
-    from_room: Mapped[Room] = relationship(back_populates='exits', foreign_keys='Exit.from_room_id')
-    to_room: Mapped[Room] = relationship(back_populates='entries', foreign_keys='Exit.to_room_id')
+    from_room: Mapped[Room] = relationship(back_populates='exits',
+                                           foreign_keys='Exit.from_room_id')
+    to_room: Mapped[Room] = relationship(back_populates='entries', 
+                                         foreign_keys='Exit.to_room_id')
+    
+    def __init__(self, direction: str, from_room: Room, to_room: Room):
+        self.from_room = from_room
+        self.to_room = to_room
+        self.direction = direction
 
     def __repr__(self):
         return f'<{self.__class__.__name__}(id:{self.id})[{self.from_room_id}]->{self.direction}->[{self.to_room_id}]>'
-
-if __name__ == "__main__":
-    print(SQL.query(Room).all())
-    print(SQL.query(Exit).all())
