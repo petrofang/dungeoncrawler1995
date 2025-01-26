@@ -92,6 +92,9 @@ class Creature(GameObject):
         if self.owner.object_type == 'room':
             return self.owner
         
+    @room.setter
+    def room(self, room: Room) -> None:
+        self.owner = room
 
 
 class Player(Creature):
