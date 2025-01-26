@@ -55,7 +55,7 @@ class IOHandler(ABC):
 
     def _login(self) -> Player|None:
         """Handle login flow."""
-        username = self.input("Username: ")
+        username = self.input("Username: ").lower()
         password = self.input("Password: ")
         
         if player := SQL.query(Player).filter_by(username=username).first():
@@ -67,7 +67,7 @@ class IOHandler(ABC):
     def _create_player(self) -> Player:
         """Handle new player creation flow."""
         while True:
-            username = self.input("Choose username: ")
+            username = self.input("Choose username: ").lower()
             if not SQL.query(Player).filter_by(username=username).first():
                 break
             self.print("Username taken")
