@@ -44,16 +44,12 @@ class Parser:
         if mine:
             if arg not in [inv.name for inv in player.inventory]:
                 player.io.print(f'I cannot find your "{arg}".')
-                return
-    
-        target = arg # target acquisition is handled by each command handler
-        # TODO: really? I think we can do better than this. Let's try and parse targets before command
-        # however, it depends on the command. Some commands may not require a target, or
-        # some commands may require a particular target type. Note that all targets are ultimately
-        # inherited from GameObject, so we can always check the type of the target, or maybe even
-        # have some intentionally unexpected behavior if the target is not of the expected type.
-        # either way it would be ideal to move target parsing into the parser module.
+                return 
 
+        target = find_target(player, valid_target_types, arg, mine)
+        print(f'arg={arg}')
+        print(f"valid target types: {valid_target_types}")
+        print(f"INFO: target={target if target else 'None'}")
 
         if command: 
             command(player=player, arg=arg, target=target)                
@@ -63,26 +59,34 @@ class Parser:
             player.io.print(f'Unknown command "{command}".')
             player.io.print('Type "help" for a list of commands.\n')
 
-def find_target(player:Player, target_types:List[object], arg:str, mine:bool=False) -> GameObject:
-    """Parse a target from the player's current room."""
+
+def find_target(player:Player, target_types:List[type], arg:str, mine:bool=False) -> GameObject:
+    """Parse a target from the player's current room or inventory.
+    
+    Args:
+        player: The player looking for the target
+        target_types: List of valid target classes (Item, Creature, etc)
+        arg: Name of target to find
+        mine: Whether to search inventory instead of room
+    """
     if not arg:
         return None
+    
     if arg in ['me', 'myself']:
         return player
     
-    room = player.room
-    target = None
-    for target_type in target_types:
-        match target_type:
-            case [Room]:
-                print('room')
-            case [Item]:
-                print('item')
-            case [Creature]:
-                print('creature')
-            case [Exit]:
-                print('exit')
-            case _:
-                print('unknown')
-    return target
-    
+    if mine:
+        for item in player.inventory:
+            if item.name == arg and any(isinstance(item, t) for t in target_types):
+                return item
+        else:
+            player.io.print(f'I cannot find your "{arg}".')
+            return None
+        
+    for object in player.room.inventory:
+        if object.name == arg and any(isinstance(object, t) for t in target_types):
+            return object
+
+    else:
+        player.io.print(f'I cannot find "{arg}".')
+        return None
