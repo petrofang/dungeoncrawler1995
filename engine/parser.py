@@ -1,6 +1,6 @@
 from typing import List
 
-from commands import AliasList, CommandList
+from engine.commands import AliasList, CommandList
 from orm import Player, GameObject, Room, Item, Creature, Exit
 
 class Parser:
@@ -47,9 +47,6 @@ class Parser:
                 return 
 
         target = find_target(player, valid_target_types, arg, mine)
-        print(f'arg={arg}')
-        print(f"valid target types: {valid_target_types}")
-        print(f"INFO: target={target if target else 'None'}")
 
         if command: 
             command(player=player, arg=arg, target=target)                
