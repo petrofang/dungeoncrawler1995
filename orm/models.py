@@ -1,3 +1,5 @@
+import os
+from dotenv import load_dotenv
 import pymssql
 from sqlalchemy import create_engine, ForeignKey, JSON 
 from sqlalchemy.orm import DeclarativeBase, sessionmaker, mapped_column, relationship, Mapped
@@ -6,7 +8,15 @@ from typing_extensions import Annotated
 from passlib.hash import pbkdf2_sha256
 from engine.exceptions import *
 
-from orm.shadow import SERVER, USER, PASSWORD, DATABASE
+# Load and validate database configuration
+load_dotenv()
+SERVER = os.getenv('DB_SERVER')
+USER = os.getenv('DB_USER')
+PASSWORD = os.getenv('DB_PASSWORD')
+DATABASE = os.getenv('DB_DATABASE')
+
+if not all([SERVER, USER, PASSWORD, DATABASE]):
+    raise ValueError("Missing required database environment variables. Check your .env file.")
 
 STARTING_ROOM = 0
 
