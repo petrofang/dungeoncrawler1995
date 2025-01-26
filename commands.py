@@ -84,16 +84,17 @@ class CommandList():
         else: player.io.print(f'Unknown command "{arg}".')
 
     @target_types(GameObject, Exit, None)
-    def look(player:Player, arg:str = None, **kwargs):
+    def look(player:Player, target:GameObject = None, **kwargs):
         """
         look - look at your surroundings
         look <target> - look at target
         look in <container> - look inside a container 
         """
-        if arg==None: 
-            pass
-        player.io.print(player.room.view(player))
-        # TODO: look at target
+        if target == None:
+            player.io.print(player.room.view(player))
+        # TODO: preposition handling, kwargs[preposition] == 'in', etc
+        else:
+            player.io.print(target.description)
         '''
         elif arg.startswith("in "):
             arg=arg[3:]
