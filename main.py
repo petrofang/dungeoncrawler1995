@@ -1,6 +1,6 @@
 
 from engine import ConsoleIO, Parser
-from ini import splash, __author__, __version__
+from ini import splash_art, __author__, __version__
 
 
 def splash():
