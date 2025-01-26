@@ -4,6 +4,7 @@ from sqlalchemy.orm import DeclarativeBase, sessionmaker, mapped_column, relatio
 from typing import List
 from typing_extensions import Annotated
 from passlib.hash import pbkdf2_sha256
+from engine.exceptions import *
 
 from orm.shadow import SERVER, USER, PASSWORD, DATABASE
 
@@ -11,8 +12,8 @@ STARTING_ROOM = 0
 
 # Database connection setup
 connection = f"mssql+pymssql://{USER}:{PASSWORD}@{SERVER}/{DATABASE}"
-engine = create_engine(connection)
-Session = sessionmaker(bind=engine)
+sql_engine = create_engine(connection)
+Session = sessionmaker(bind=sql_engine)
 SQL = Session()
 
 # Type annotations
@@ -49,10 +50,6 @@ class GameObject(Base):
                                                          back_populates='owner', 
                                                          foreign_keys='GameObject.owner_id')    
 
-    @property
-    def a(self) -> str:
-        return 'an' if self.name[0].lower() in 'aeioh' else 'a'
-
     def __init__(self, name: str, description: str, *args, **kwargs):
         self.name = name
         self.description = description
@@ -60,6 +57,26 @@ class GameObject(Base):
 
     def __repr__(self):
         return f'<{self.__class__.__name__}(id:{self.id})[{self.name}]>'
+    
+    @property
+    def a(self) -> str:
+        return 'an' if self.name[0].lower() in 'aeioh' else 'a'
+
+    @property
+    def room(self):
+        try:
+            if self.owner.object_type == 'room':
+                return self.owner
+            else: 
+                raise RoomError(f'{self.name} is not in a room.') 
+        except RoomError as e:
+            print(e)
+            return None
+        
+    @room.setter
+    def room(self, room) -> None:
+        self.owner = room
+
 
 class Room(GameObject):
     __tablename__ = 'rooms'
@@ -86,15 +103,6 @@ class Creature(GameObject):
     Int: Mapped[null_1] # Intelligence
     hp: Mapped[null_1] # Hit points
     hp_max: Mapped[null_1] # Maximum hit points
-
-    @property
-    def room(self) -> Room:
-        if self.owner.object_type == 'room':
-            return self.owner
-        
-    @room.setter
-    def room(self, room: Room) -> None:
-        self.owner = room
 
 
 class Player(Creature):
