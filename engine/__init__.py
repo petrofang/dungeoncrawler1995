@@ -1,8 +1,14 @@
 """
-DungeonCrawler1995 Game Engine Package
+DungeonCrawler1995 Game Engine
+
+This package contains the core game logic including:
+- Game state management
+- Event handling
+- Command processing
+- Game loop control
 """
 
-from .exceptions import Quit
+from .exceptions import Quit, RoomError
 from .io import IOHandler, ConsoleIO, RemoteIO
 from .parser import Parser
 
@@ -11,5 +17,6 @@ __all__ = [
     'ConsoleIO', 
     'RemoteIO',
     'Parser',
-    'Quit'
+    'Quit',
+    'RoomError'
 ]
