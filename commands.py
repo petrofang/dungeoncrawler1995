@@ -14,27 +14,6 @@ class CommandList():
     ''' 
     This is the master list of all player commands outside of combat,
     as well as being the command handler for each command.
-    
-    The command handlers further parse and sanitize command arguments,
-    then determine the target with find_target() before sending 
-    PAAT (Player, Action, Arguments, Target) to be performed by the
-    actions module (actions.py) with:
-        actions.do(P,A,A,T)
-
-    Generally speaking, commands which do not change anything or cause
-    any interaction with other game objects, mobiles or players can
-    be parsed directly by the command and are not sent to do(PAAT).
-        eg., checking inventory or looking.
-    
-    format:
-    
-    def command(player:Creature, arg:str=None, target=None):
-        """ 
-        docstring - displayed by help <command>
-        """
-        action="action"
-        # command logic
-        actions.do(player, action, arg, target)     
     '''
 
     @staticmethod
@@ -63,6 +42,8 @@ class CommandList():
                 player.io.print(each_item)
         else: player.io.print('None')
         player.io.print()
+
+
 
     @target_types(None)
     def help(player: Player, arg: str=None, **kwargs):
