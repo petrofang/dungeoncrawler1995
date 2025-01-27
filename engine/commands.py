@@ -1,4 +1,4 @@
-from orm import GameObject, Creature, Player, Item, Room, Exit
+from orm import SQL, GameObject, Creature, Player, Item, Room, Exit
 from engine import Quit
 
 def target_types(*target_types):
@@ -64,7 +64,7 @@ class CommandList():
             player.io.print(help_command.__doc__)       
         else: player.io.print(f'Unknown command "{arg}".')
 
-    @target_types(GameObject, Exit, None)
+    @target_types(GameObject, None)
     def look(player:Player, target:GameObject = None, **kwargs):
         """
         look - look at your surroundings
@@ -76,28 +76,34 @@ class CommandList():
         # TODO: preposition handling, kwargs[preposition] == 'in', etc
         else:
             player.io.print(target.description)
-        '''
-        elif arg.startswith("in "):
-            arg=arg[3:]
-            target=find_target(player, arg, Item, in_room=True, in_inventory=True)
-            if target and target.type == "container":
-                target.look_in(player)
-            else:
-                player.print("You cannot see inside that.")
-        elif player.room.signs and arg in player.room.signs.keys():
-            player.print(player.room.signs[arg])
-        else:
-            target=find_target(player, arg, in_room=True, 
-                               in_inventory=True, in_equipment=True)
-            if target is not None:
-                target.look(player)
-            elif player.room.exit(arg): 
-                player.room.exit(arg).look(player)
-            else:
-                player.print(f"You see no '{arg}'.")
-        '''
         return True
 
+    @target_types(Item)
+    def get(player:Player, target:Item, **kwargs):
+        """
+        get <item> - pick up an item
+        """
+        if target and target.owner == player.room:
+            target.owner = player
+            SQL.commit()
+            player.io.print(f'You pick up the {target.name}.')
+        elif target and target.owner == player:
+            player.io.print(f'You already have the {target.name}.')
+        elif not target:
+            player.io.print(f'I cannot find that.')
+
+    @target_types(Item)
+    def drop(player:Player, target:Item, **kwargs):
+        """
+        drop <item> - drop an item
+        """
+        if target and target.owner == player:
+            target.owner = player.room
+            SQL.commit()
+            player.io.print(f'You drop the {target.name}.')
+        elif not target:
+            player.io.print(f'I cannot find that.')
+        
     @target_types(None)
     def quit(player: Player, **kwargs):
         """
