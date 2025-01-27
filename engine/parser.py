@@ -48,6 +48,7 @@ class Parser:
 
         target = find_target(player, valid_target_types, arg, mine)
 
+        
         if command: 
             command(player=player, arg=arg, target=target)                
         elif alias:
@@ -83,7 +84,9 @@ def find_target(player:Player, target_types:List[type], arg:str, mine:bool=False
     for object in player.room.inventory:
         if object.name == arg and any(isinstance(object, t) for t in target_types):
             return object
+        
+    for object in player.inventory:
+        if object.name == arg and any(isinstance(object, t) for t in target_types):
+            return object
 
-    else:
-        player.io.print(f'I cannot find "{arg}".')
-        return None
+    return None
