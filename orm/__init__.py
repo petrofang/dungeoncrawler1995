@@ -4,8 +4,6 @@ DungeonCrawler1995 ORM Package
 Database models and SQLAlchemy setup for the dungeon crawler game.
 """
 
-from ini import __author__, __version__
-
 from .models import SQL, Base, GameObject, Room, Exit, Item, Creature, Player
 
 # Explicitly declare public API
@@ -17,5 +15,5 @@ __all__ = [
     'Exit',         # Exit model for connections between rooms
     'Creature',     # Creature model for monsters and NPCs
     'Item',         # Item model for objects that can be collected
-    'Player',        # Player model for the user-controlled character
+    'Player',       # Player model for the user-controlled character
 ]

@@ -1,11 +1,13 @@
-import os
+from contextlib import contextmanager
 from dotenv import load_dotenv
+import os
+from passlib.hash import pbkdf2_sha256
 import pymssql
 from sqlalchemy import create_engine, ForeignKey, JSON 
-from sqlalchemy.orm import DeclarativeBase, sessionmaker, mapped_column, relationship, Mapped
+from sqlalchemy.orm import DeclarativeBase, sessionmaker, mapped_column, relationship, Mapped, scoped_session
 from typing import List
 from typing_extensions import Annotated
-from passlib.hash import pbkdf2_sha256
+
 from engine.exceptions import *
 
 # Load and validate database configuration
@@ -23,8 +25,7 @@ STARTING_ROOM = 0
 # Database connection setup
 connection = f"mssql+pymssql://{USER}:{PASSWORD}@{SERVER}/{DATABASE}"
 sql_engine = create_engine(connection)
-Session = sessionmaker(bind=sql_engine)
-SQL = Session()
+SQL = scoped_session(sessionmaker(bind=sql_engine))
 
 # Type annotations
 pk_id = Annotated[int, mapped_column(primary_key=True, autoincrement=True)]
@@ -56,6 +57,8 @@ class GameObject(Base):
                        'polymorphic_on': 'object_type'}
     id: Mapped[pk_id]
     name: Mapped[str]
+    noun: Mapped[str] # Noun form of the name
+    adjectives: Mapped[json] # Adjectives describing the object
     description: Mapped[str]
     article: Mapped[bool] # True if the name should be preceded with an article such as 'a' or 'an'
     owner_id: Mapped[int | None] = mapped_column(ForeignKey('game_objects.id'), nullable=True)
@@ -69,12 +72,15 @@ class GameObject(Base):
                                                          foreign_keys='GameObject.owner_id')    
 
     def __init__(self, 
-                 name: str = 'unnamed', 
+                 name: str = 'unnamed',
+                 noun: str = 'thing',
+                 adjectives: List[str] = None,
                  description: str|None = None,  
                  owner_id: int = 0,
                  article: bool = True,
                  *args, **kwargs):
         self.name = name
+        
         self.description = description
         self.owner_id = owner_id
         self.article = article
@@ -228,8 +234,7 @@ class Exit(Base):
         return (f'<{self.__class__.__name__}',
                 f'(id:{self.id})[{self.from_room_id}]->',
                 f'{self.direction}->[{self.to_room_id}]>')
-    
-    
+
 
 if __name__=="__main__":
     print("this module is not meant to be run directly")
