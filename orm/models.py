@@ -1,32 +1,10 @@
-from contextlib import contextmanager
-from dotenv import load_dotenv
-import os
 from passlib.hash import pbkdf2_sha256
-import pymssql
-from sqlalchemy import create_engine, ForeignKey, JSON 
-from sqlalchemy.orm import DeclarativeBase, sessionmaker, mapped_column, relationship, Mapped, scoped_session
+from sqlalchemy import ForeignKey, JSON 
+from sqlalchemy.orm import DeclarativeBase, mapped_column, relationship, Mapped
 from typing import List
 from typing_extensions import Annotated
 
 from engine.exceptions import *
-
-# Load and validate database configuration
-load_dotenv()
-SERVER = os.getenv('DB_SERVER')
-USER = os.getenv('DB_USER')
-PASSWORD = os.getenv('DB_PASSWORD')
-DATABASE = os.getenv('DB_DATABASE')
-
-if not all([SERVER, USER, PASSWORD, DATABASE]):
-    raise ValueError("Missing required database environment variables. Check your .env file.")
-
-STARTING_ROOM = 0
-
-# Database connection setup
-connection = f"mssql+pymssql://{USER}:{PASSWORD}@{SERVER}/{DATABASE}"
-sql_engine = create_engine(connection)
-SQL = scoped_session(sessionmaker(bind=sql_engine))
-
 # Type annotations
 pk_id = Annotated[int, mapped_column(primary_key=True, autoincrement=True)]
 fk_id = Annotated[int, mapped_column(ForeignKey('game_objects.id'), primary_key=True, autoincrement=True)]
