@@ -33,7 +33,7 @@ class Action():
     @staticmethod
     def chown(subject, target, arg, **kwargs):
         ''' Change the owner of an object. '''
-        print(f"Changing owner of {target} to {arg}")
+        print(f"Changing owner of {repr(target)} to {repr(arg)}")
         target.owner = arg
         SQL.add(target)
         return True
