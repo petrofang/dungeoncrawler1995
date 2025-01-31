@@ -87,7 +87,8 @@ class CommandList():
         """
         if target and target.owner == player.room:
             do(player, 'chown', target, player)
-            player.io.print(f'You pick up the {target.name}.')
+            player.io.print(f'You pick up {target.a}{target.name}.')
+            do(player, 'echo_around', None, arg=f"{player.name} picks up {target.a}{target.name}.")
         elif target and target.owner == player:
             player.io.print(f'You already have the {target.name}.')
         elif not target:
@@ -100,7 +101,8 @@ class CommandList():
         """
         if target and target.owner == player:
             do(player, 'chown', target, player.room)
-            player.io.print(f'You drop the {target.name}.')
+            player.io.print(f'You drop {target.a}{target.name}.')
+            do(player, 'echo_around', None, arg=f"{player.name} drops {target.a}{target.name}.")
         elif not target:
             player.io.print(f'I cannot find that.')
         
@@ -141,8 +143,10 @@ class CommandList():
             return
         if way:
             player.io.print(f"You go {way.direction}.")
+            do(player, 'echo_around', None, arg=f"{player.name} heads {way.direction}.")
             do(player, 'chown', player, way.to_room)
             player.io.print(player.room.view(player))
+            do(player, 'echo_around', None, arg=f"{player.name} arrives.")
 
     @target_types(None)
     def say(player: Player, arg: str = None, **kwargs):
@@ -153,7 +157,8 @@ class CommandList():
             player.io.print("Say what?")
             return
             
-        do(player, 'echo', None, arg=f"{player.name} says, '{arg}'")
+        do(player, 'echo_at', None, arg=f"You say '{arg}'")
+        do(player, 'echo_around', None, arg=f"{player.name} says, '{arg}'")
 
     @target_types(None)
     def emote(player: Player, arg: str = None, **kwargs):
