@@ -9,13 +9,15 @@ This package contains the core game logic including:
 """
 
 from .exceptions import Quit, RoomError
-from .io import IOHandler, ConsoleIO, RemoteIO
+from .io import IOHandler, TelnetIO
 from .parser import Parser
+from .server import GameServer
 
 __all__ = [
+    'GameServer',
     'IOHandler',
     'ConsoleIO', 
-    'RemoteIO',
+    'TelnetIO',
     'Parser',
     'Quit',
     'RoomError'
