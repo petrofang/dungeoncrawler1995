@@ -42,10 +42,31 @@ class Action():
     def echo(subject, target, arg, **kwargs):
         ''' Print to all in the player's room. '''
         room = subject.owner
-        print(f"Echoing '{arg}' to room {repr(room)}")
         for everyone in room.inventory:
             if isinstance(everyone, Player):
-                everyone.io.print(arg)
+                try:
+                    everyone.io.print(arg)
+                except Exception as e:
+                    print(f"Error echoing to {everyone}: {e}")
+
+    @staticmethod
+    def echo_at(subject, target, arg, **kwargs):
+        ''' Print to a specific player. '''
+        try:
+            target.io.print(arg)
+        except Exception as e:
+            print(f"Error echoing to {target}: {e}")
+
+    @staticmethod
+    def echo_around(subject, target, arg, **kwargs):
+        ''' Print to all in the player's room except the player. '''
+        room = subject.owner
+        for everyone in room.inventory:
+            if isinstance(everyone, Player) and everyone != subject:
+                try:
+                    everyone.io.print(arg)
+                except Exception as e:
+                    print(f"Error echoing to {everyone}: {e}")
 
 def do(subject, action, target, arg, **kwargs):
     action_queue.put((subject, action, target, arg, kwargs))
