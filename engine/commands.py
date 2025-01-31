@@ -144,6 +144,29 @@ class CommandList():
             do(player, 'chown', player, way.to_room)
             player.io.print(player.room.view(player))
 
+    @target_types(None)
+    def say(player: Player, arg: str = None, **kwargs):
+        """
+        say <message> - Say something to everyone in the room
+        """
+        if not arg:
+            player.io.print("Say what?")
+            return
+            
+        do(player, 'echo', None, arg=f"{player.name} says, '{arg}'")
+
+    @target_types(None)
+    def emote(player: Player, arg: str = None, **kwargs):
+        """
+        emote <action> - Express an action (e.g., 'emote laughs' shows 'Bob laughs')
+        """
+        if not arg:
+            player.io.print("Emote what?")
+            return
+            
+        message = f"{player.name} {arg}"
+        do(player, 'echo', None, arg=message)
+
 class AliasList():
     ''' 
     This is the master list of all player command aliases.
