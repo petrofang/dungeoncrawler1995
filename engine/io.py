@@ -1,8 +1,11 @@
 from abc import ABC, abstractmethod
+import socket
+
 from orm import Player, SQL
 from ini import STARTING_ROOM
 from .parser import Parser
 from .exceptions import Quit
+
 
 class IOHandler(ABC):
     """Base class for handling input/output operations in the game."""
@@ -96,14 +99,89 @@ class ConsoleIO(IOHandler):
     def input(self, prompt: str|None = None) -> str:
         return input(prompt or " > ").strip().lower()
 
-class RemoteIO(IOHandler):
-    """Stub implementation of IOHandler for remote connections."""
+class TelnetIO(IOHandler):
+    """Implementation of IOHandler for telnet connections."""
     
-    def print(self, message: str) -> None:
-        raise NotImplementedError
-
+    # Telnet protocol bytes
+    IAC  = bytes([255]) # Interpret As Command
+    DONT = bytes([254])
+    DO   = bytes([253])
+    WONT = bytes([252])
+    WILL = bytes([251])
+    
+    def __init__(self, parser: Parser, connection: socket.socket):
+        super().__init__(parser)
+        self.connection = connection
+        self.buffer = bytearray()
+        
+    def print(self, message: str = '', **kwargs) -> None:
+        """Send output to telnet client with preserved formatting."""
+        try:
+            # Split message into lines to preserve exact formatting
+            lines = message.splitlines() or ['']  # Handle empty strings
+            
+            # Handle end= parameter for prompts
+            if kwargs.get('end', '\n') == '':
+                # Single line without newline (prompt)
+                self.connection.send(message.encode())
+            else:
+                # Full message with preserved line breaks
+                output = []
+                for line in lines:
+                    output.append(line)
+                    output.append('\r\n')  # Explicit newline after each line
+                self.connection.send(''.join(output).encode())
+                
+        except Exception as e:
+            print(f"Error sending to client: {e}")
+        
     def input(self, prompt: str|None = None) -> str:
-        raise NotImplementedError
+        """Get input from telnet client."""
+        try:
+            if prompt:
+                self.print(prompt, end='')
+            else:
+                self.print(" >> ", end='')  # Added default prompt
+            
+            line = ''
+            self.buffer.clear()
+            
+            while True:
+                byte = self.connection.recv(1)
+                if not byte:
+                    raise ConnectionError("Client disconnected")
+                
+                # Handle telnet protocol commands
+                if byte == self.IAC:
+                    cmd = self.connection.recv(1)
+                    opt = self.connection.recv(1)
+                    continue
+                
+                # Handle normal input
+                if byte == b'\r':
+                    continue
+                if byte == b'\n':
+                    self.connection.send(b'\r\n')  # Move to next line
+                    return line.strip().lower()
+                
+                # Handle backspace
+                if byte == b'\x7f' or byte == b'\x08':
+                    if line:
+                        line = line[:-1]
+                        # Erase character from screen
+                        self.connection.send(b'\x08 \x08')
+                    continue
+                
+                # Add printable characters to line
+                if byte.isascii() and not byte[0] > 127:
+                    char = byte.decode()
+                    line += char
+                    # Echo character back
+                    self.connection.send(byte)
+                    
+        except Exception as e:
+            print(f"Error receiving from client: {e}")
+            raise
 
 if __name__ == "__main__":
     print("This module is not meant to be run directly. use main.py instead.")

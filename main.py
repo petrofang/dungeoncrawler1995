@@ -1,6 +1,6 @@
 import threading
 
-from engine import ConsoleIO, Parser
+from engine import GameServer
 import ini
 
 def main():
@@ -11,9 +11,14 @@ def main():
     action_thread.start()
 
     # Start the player connection thread:
-    connection = ConsoleIO(Parser())
-    connection.print(ini.splash_art)
-    connection.start_session()
+          
+    print("Starting server...")
+    server = GameServer('0.0.0.0', 4000)
+    try:
+        server.start()
+    except KeyboardInterrupt:
+        print("\nShutting down server...")
+        server.stop()
 
 if __name__ == "__main__":
     main()  
