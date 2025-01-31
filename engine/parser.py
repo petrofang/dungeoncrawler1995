@@ -11,7 +11,10 @@ class Parser:
         if not command_str:
             player.io.print('Huh?\n')   
             return
-            
+
+        if command_str[0] == "'":
+            command_str = 'say ' + command_str[1:]
+
         verb, *args = command_str.split()
      
         mine = False
