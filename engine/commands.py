@@ -1,5 +1,7 @@
-from orm import SQL, GameObject, Creature, Player, Item, Room, Exit
+from orm import GameObject, Creature, Player, Item, Room, Exit
+from orm import do, SQL
 from engine import Quit
+
 
 def target_types(*target_types):
     ''' 
@@ -39,7 +41,7 @@ class CommandList():
         player.io.print('─'*len(title))
         if player.inventory: 
             for each_item in player.inventory:
-                player.io.print(each_item)
+                player.io.print(str(each_item))
         else: player.io.print('None')
         player.io.print()
 
@@ -84,8 +86,7 @@ class CommandList():
         get <item> - pick up an item
         """
         if target and target.owner == player.room:
-            target.owner = player
-            SQL.commit()
+            do(player, 'chown', target, player)
             player.io.print(f'You pick up the {target.name}.')
         elif target and target.owner == player:
             player.io.print(f'You already have the {target.name}.')
@@ -98,8 +99,7 @@ class CommandList():
         drop <item> - drop an item
         """
         if target and target.owner == player:
-            target.owner = player.room
-            SQL.commit()
+            do(player, 'chown', target, player.room)
             player.io.print(f'You drop the {target.name}.')
         elif not target:
             player.io.print(f'I cannot find that.')
@@ -141,10 +141,8 @@ class CommandList():
             return
         if way:
             player.io.print(f"You go {way.direction}.")
-            player.room = way.to_room
+            do(player, 'chown', player, way.to_room)
             player.io.print(player.room.view(player))
-#        actions.do(subject, action, dir)
-
 
 class AliasList():
     ''' 
